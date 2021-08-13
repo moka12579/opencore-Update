@@ -22,13 +22,12 @@ public class ocUpdate {
     static String path2 = System.getProperty("java.class.path");
     static File path =new File(path2);
     static String a= path2.replace(path.getName(),"");
+    //主函数
     public static void main(String[] args) throws Exception{
         List<String> files = new ArrayList<String>();
         System.out.println("path = " + path.getName());
         System.out.println("a = " + a);
         File file = new File(a+"old/EFI");
-//        File[] tempList = file.listFiles();
-//        System.out.println("tempList = " + tempList[0]);
         System.out.println("file = " + String.valueOf(file));
         if(file.isDirectory()) {
             File[] tempList = file.listFiles();
@@ -58,10 +57,11 @@ public class ocUpdate {
         }
 
     }
+    //下载新版efi
     public static void update(String path){
         String fileUrl="https://gitee.com/moka123/OpenCorePkg/attach_files/798330/download/OpenCore-0.7.2-RELEASE.zip";
         try {
-            downLoad(fileUrl,path,"OpenCore-0.7.2-RELEASE.zip");
+            downLoadEFI(fileUrl,path,"OpenCore-0.7.2-RELEASE.zip");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -99,9 +99,26 @@ public class ocUpdate {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        zipDecode(str1,savePath);
     }
-    public static void zipDecode(String zipPath,String path) throws Exception{
+    public static void downLoadEFI(String urlStr, String savePath, String fileName){
+        try {
+            downLoad(urlStr,savePath,fileName);
+            String str=a+"new/"+fileName;
+            zipDecode(str,savePath);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    public static void downLoadTheme(String urlStr, String savePath, String fileName) throws Exception {
+        String str1=savePath+"/"+fileName;
+        downLoad(urlStr,savePath,fileName);
+        File file1=new File(str1);
+        String path2=a+"new";
+        File file2=new File(path2);
+        zipDecode(file1,file2);
+    }
+    //解压efi到指定位置
+    public static void zip(String zipPath,String path) throws Exception{
         ZipFile zipFile = new ZipFile(zipPath,"GBK");//压缩文件的实列,并设置编码
         //获取压缩文中的所以项
         String outPath = path+"/";
@@ -144,11 +161,21 @@ public class ocUpdate {
         }
         System.out.println("解压完成");
         zipFile.close();
+    }
+    public static void zipDecode(String zipPath,String path) throws Exception{
+        zip(zipPath,path);
         File fromFile=new File(path+"/Docs/Sample.plist");
         File toFile=new File(path+"/X64/EFI/OC/config.plist");
         copyFile(fromFile,toFile);
         updateEFI();
     }
+    public static void zipDecode(File zipPath,File path) throws Exception{
+        zip(String.valueOf(zipPath),String.valueOf(path));
+        String str1=a+"new/OcBinaryData-master/Resources";
+        String str2=a+"result/EFI/OC/Resources";
+        updateTheme(str1,str2);
+    }
+    //复制文件
     public static void copyFile(File resource,File target) throws Exception{
         FileInputStream inputStream = new FileInputStream(resource);
         BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream);
@@ -172,6 +199,7 @@ public class ocUpdate {
         inputStream.close();
         outputStream.close();
     }
+    //更新EFI
     public static void updateEFI() throws Exception{
         String str1=a + "old/EFI/OC";
         String str2=a+"old/EFI/OC/Tools";
@@ -233,6 +261,7 @@ public class ocUpdate {
         copyFolder(str6,str7);
         end();
     }
+    //复制文件内容
     public static void copy() throws Exception{
         String str1=a+"old/EFI/OC/config.plist";
         String str2=a+"new/X64/EFI/OC/config.plist";
@@ -247,6 +276,7 @@ public class ocUpdate {
         inputStream.close();
         outputStream.close();
     }
+    //复制文件夹
     public static void copyFolder(String resource, String target)  {
         Path path1 = Paths.get(resource);
         Path path2 = Paths.get(target);
@@ -256,19 +286,64 @@ public class ocUpdate {
             System.out.println("移动成功");
         }
     }
-    public static void end() {
+    //结束
+    public static void end() throws Exception{
         try {
             String str6 = a+"new/X64/EFI";
             String str7 = a+"result/EFI";
             copyFolder(str6,str7);
             System.out.println("OC升级已完成，在result文件夹里，请自行测试");
-        }catch (Exception e){
-            try {
-                throw new Exception("出现错误，请检查后再次运行");
-            } catch (Exception ex) {
-
+            System.out.println("您是否要添加仿冒白苹果主题");
+            System.out.println("请输入 是 或 否");
+            System.out.println("如果输入 否 则不添加主题");
+            Scanner s=new Scanner(System.in);
+            String str=s.next();
+            switch (str){
+                case "是":
+                    String fileUrl="https://gitee.com/moka123/OcBinaryData/attach_files/800256/download/OcBinaryData-master.zip";
+                    String path=a+"new";
+                    String fileName="OcBinaryData-master.zip";
+                    downLoadTheme(fileUrl,path,fileName);
+                case "否":
+                    System.out.println("OC升级已完成");
             }
+
+        }catch (Exception e){
+            e.printStackTrace();
         }
 
+    }
+    public static void updateTheme(String str1,String str2){
+        File file2=new File(str1);
+        File[] tempList2 = file2.listFiles();
+        for (int i = 0; i < tempList2.length; i++) {
+            if (tempList2[i].isDirectory()){
+                File file3=new File(String.valueOf(tempList2[i]));
+                File[] tempList3 = file3.listFiles();
+                for (int j = 0; j < tempList3.length; j++) {
+                    File fileName=new File(String.valueOf(tempList3[j]));
+                    System.out.println("tempList3 = " + tempList3[j]);
+                    String str="Acidanthera";
+                    if (fileName.getName().endsWith(".mp3")){
+                        File fromFile=new File(String.valueOf(tempList3[j]));
+                        File toFile= new File(a+"result/EFI/OC/Resources/Audio"+File.separator+fileName.getName());
+                        copyFolder(String.valueOf(fromFile), String.valueOf(toFile));
+                    }else if (fileName.getName().endsWith(".bin")||fileName.getName().endsWith(".png")){
+                        File fromFile=new File(String.valueOf(tempList3[j]));
+                        File toFile= new File(a+"result/EFI/OC/Resources/Font"+File.separator+fileName.getName());
+                        copyFolder(String.valueOf(fromFile), String.valueOf(toFile));
+                    }else if(String.valueOf(tempList3[j]).contains(str)){
+                        File fromFile=new File(a+"new/OcBinaryData-master/Resources/Image/Acidanthera");
+                        System.out.println("fromFile = " + fromFile);
+                        File toFile= new File(a+"result/EFI/OC/Resources/Image");
+                        copyFolder(String.valueOf(fromFile), String.valueOf(toFile));
+                    }else if(fileName.getName().endsWith(".l2x")||fileName.getName().endsWith(".lbl")){
+                        File fromFile=new File(String.valueOf(tempList3[j]));
+                        File toFile= new File(a+"result/EFI/OC/Resources/Label"+File.separator+fileName.getName());
+                        copyFolder(String.valueOf(fromFile), String.valueOf(toFile));
+                    }
+                }
+            }
+        }
     }
 }
