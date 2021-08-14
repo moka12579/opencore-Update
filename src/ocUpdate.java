@@ -10,6 +10,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.zip.CRC32;
 import java.util.zip.CheckedInputStream;
 
@@ -84,7 +86,8 @@ public class ocUpdate {
         }
         DataInputStream in = new DataInputStream(urlCon.getInputStream());
         DataOutputStream out = new DataOutputStream(new FileOutputStream(str1));
-        byte[] buffer = new byte[2048];
+        byte[] buffer = new byte[20*1024*1024];
+        System.out.println("buffer = " + buffer);
         int count = 0;
         while ((count = in.read(buffer)) > 0) {
             out.write(buffer, 0, count);
@@ -173,7 +176,14 @@ public class ocUpdate {
         zip(String.valueOf(zipPath),String.valueOf(path));
         String str1=a+"new/OcBinaryData-master/Resources";
         String str2=a+"result/EFI/OC/Resources";
-        updateTheme(str1,str2);
+        File file=new File(str1);
+        if (!file.isDirectory()) {
+            str1=a+"new/Resources";
+            updateTheme(str1,str2);
+        }else {
+            updateTheme(str1,str2);
+        }
+
     }
     //复制文件
     public static void copyFile(File resource,File target) throws Exception{
@@ -296,6 +306,7 @@ public class ocUpdate {
             System.out.println("您是否要添加仿冒白苹果主题");
             System.out.println("请输入 是 或 否");
             System.out.println("如果输入 否 则不添加主题");
+            System.out.println("如果输入这两个意外的内容则使用第三方主题");
             Scanner s=new Scanner(System.in);
             String str=s.next();
             switch (str){
@@ -304,8 +315,13 @@ public class ocUpdate {
                     String path=a+"new";
                     String fileName="OcBinaryData-master.zip";
                     downLoadTheme(fileUrl,path,fileName);
+                    break;
                 case "否":
                     System.out.println("OC升级已完成");
+                    break;
+                default:
+                    thirdPartyThemes();
+                    break;
             }
 
         }catch (Exception e){
@@ -323,7 +339,7 @@ public class ocUpdate {
                 for (int j = 0; j < tempList3.length; j++) {
                     File fileName=new File(String.valueOf(tempList3[j]));
                     System.out.println("tempList3 = " + tempList3[j]);
-                    String str="Acidanthera";
+                    String str="image";
                     if (fileName.getName().endsWith(".mp3")){
                         File fromFile=new File(String.valueOf(tempList3[j]));
                         File toFile= new File(a+"result/EFI/OC/Resources/Audio"+File.separator+fileName.getName());
@@ -334,9 +350,16 @@ public class ocUpdate {
                         copyFolder(String.valueOf(fromFile), String.valueOf(toFile));
                     }else if(String.valueOf(tempList3[j]).contains(str)){
                         File fromFile=new File(a+"new/OcBinaryData-master/Resources/Image/Acidanthera");
-                        System.out.println("fromFile = " + fromFile);
-                        File toFile= new File(a+"result/EFI/OC/Resources/Image");
-                        copyFolder(String.valueOf(fromFile), String.valueOf(toFile));
+                        System.out.println("!fromFile.isDirectory() = " + !fromFile.isDirectory());
+                        if (!fileName.isDirectory()){
+                            fromFile=new File(a+"new/Resources/image/chris1111");
+                            File toFile= new File(a+"result/EFI/OC/Resources/Image");
+                            copyFolder(String.valueOf(fromFile), String.valueOf(toFile));
+                        }else {
+                            System.out.println("fromFile = " + fromFile);
+                            File toFile= new File(a+"result/EFI/OC/Resources/Image");
+                            copyFolder(String.valueOf(fromFile), String.valueOf(toFile));
+                        }
                     }else if(fileName.getName().endsWith(".l2x")||fileName.getName().endsWith(".lbl")){
                         File fromFile=new File(String.valueOf(tempList3[j]));
                         File toFile= new File(a+"result/EFI/OC/Resources/Label"+File.separator+fileName.getName());
@@ -346,4 +369,48 @@ public class ocUpdate {
             }
         }
     }
+    //第三方主题下载
+    public static void thirdPartyThemes() throws Exception{
+        String webString = getWebString("https://gitee.com/moka123/My-Simple-OC-Themes/tree/main/Resources-0.7.0","UTF-8");
+        String pattern = "(\\w||\\-)*\\.zip";
+        Pattern r = Pattern.compile(pattern);
+        Matcher m = r.matcher(webString);
+        TreeSet  TreeSet = new TreeSet();
+        Set set = Collections.synchronizedSet(TreeSet);
+        while (m.find()){
+            if(m.group().equals(".zip")||m.group().equals("26Steel.zip")) continue;
+            set.add(m.group());
+        }
+        ArrayList <String> arruni = new ArrayList<String>(set);
+        for (int i = 1;i < arruni.size() ; i++) {
+            System.out.println(i+"."+arruni.get(i));
+        }
+        System.out.println("请输入您要下载的第三方主题（输入序号即可）");
+        Scanner s=new Scanner(System.in);
+        int i=s.nextInt();
+        System.out.println(arruni.get(i));
+        String urlStr="https://gitee.com/moka123/My-Simple-OC-Themes/raw/main/Resources-0.7.0/"+arruni.get(i);
+        String savePath=a+"new";
+        String fileName=arruni.get(i);
+        downLoadTheme(urlStr,savePath,fileName);
+    }
+    public static String getWebString(String pageURL,String encoding) {
+        StringBuffer sbBuffer = new StringBuffer();
+        try {
+            URL url = new URL(pageURL);
+            BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream(),encoding));
+            String lineString;
+            while((lineString=in.readLine())!=null)
+            {
+                sbBuffer.append(lineString);
+                sbBuffer.append("\n");
+            }
+            in.close();
+        } catch (Exception e) {
+            // TODO: handle exception
+        }
+        return sbBuffer.toString();
+
+    }
+
 }
