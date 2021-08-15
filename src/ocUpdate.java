@@ -359,12 +359,10 @@ public class ocUpdate {
                         copyFolder(String.valueOf(fromFile), String.valueOf(toFile));
                     }else if(String.valueOf(tempList3[j]).contains(str.substring(0,1).toUpperCase(Locale.ROOT))||String.valueOf(tempList3[j]).contains(str)) {
                         File fromFile = new File(a + "new/OcBinaryData-master/Resources/Image/Acidanthera");
-                        System.out.println("!fromFile.isDirectory() = " + !fromFile.isDirectory());
                         if (!fileName.isDirectory()) {
                             fromFile = new File(a + "new/Resources/image");
                             File toFile = new File(a + "result/EFI/OC/Resources/Image");
                             copyFolder(String.valueOf(fromFile), String.valueOf(toFile));
-                            System.out.println("fromFile = " + fromFile.isDirectory());
                             if (!fromFile.isDirectory()){
                                 fromFile = new File(a + "old/EFI/OC/Resources/Image");
                                 copyFolder(String.valueOf(fromFile), String.valueOf(toFile));
