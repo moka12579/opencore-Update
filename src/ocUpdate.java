@@ -80,14 +80,21 @@ public class ocUpdate {
         HttpURLConnection urlCon = (HttpURLConnection) url.openConnection();
         urlCon.setConnectTimeout(6000);
         urlCon.setReadTimeout(6000);
+        urlCon.setRequestProperty("accept", "*/*");
+        urlCon.setRequestProperty("connection", "Keep-Alive");
+        urlCon.setRequestProperty("user-agent",
+                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.131 Safari/537.36");
+        urlCon.setRequestProperty("Cookie",
+                "user_locale=zh-CN; oschina_new_user=false; tz=Asia%2FShanghai; sajssdk_2015_cross_new_user=1; Hm_lvt_24f17767262929947cc3631f99bfd274=1628946576; gitee_user=true; sensorsdata2015jssdkcross=%7B%22distinct_id%22%3A%229586785%22%2C%22first_id%22%3A%2217b44c83238449-04701f51eca36f-35607403-1296000-17b44c8323917e2%22%2C%22props%22%3A%7B%22%24latest_traffic_source_type%22%3A%22%E7%9B%B4%E6%8E%A5%E6%B5%81%E9%87%8F%22%2C%22%24latest_search_keyword%22%3A%22%E6%9C%AA%E5%8F%96%E5%88%B0%E5%80%BC_%E7%9B%B4%E6%8E%A5%E6%89%93%E5%BC%80%22%2C%22%24latest_referrer%22%3A%22%22%7D%2C%22%24device_id%22%3A%2217b44c83238449-04701f51eca36f-35607403-1296000-17b44c8323917e2%22%7D; remote_way=http; Hm_lpvt_24f17767262929947cc3631f99bfd274=1628946640; gitee-session-n=SUVyZExKZmdZU09rOEE0d09OY1lGcnJCd1h1cmRlelVrelVGdVRuVzVTWDVvWTdSOHI1bjdGRVFPdGpLekdIVzA3UHlVUFJ2eFNrU2dVUFZiazRISDdYWWdjOW5NeTVhVW1oTEl2WnpyeXMzOWZFK2p2bEhHM1piTWUwQU1mVmNRWldQcnpaSElQcDJyVHpYM3A4RXU4ZkdNUWw5TnlRcXRiRnp3WnQzOVJsSkhRU2lkWld6TS9TL3ZBQmVuWUxiM0w2Zml0YWtCTm9uQXZTNnBtckt4RkJueVUvclAzRkhIQkE1RThaUVl4T1REMHA0Rk9QT1hMTFg1RHEwRzFDYjZBMDQ4bUpwc3I3d2dmY0NmOUltUlBvNkptUGN5WjY5ZzJHcldFN2l4a002MzlGVWZ4S0I5K3pEMHUzbXp5NW1BKzJrQ0lhTFd3YWc3QzUxWUFNeTZyd29HMjJ3Y1JrUTF3UGQrZk1mYzQ4PS0tcE1BUm9RVERaQ3NTVFN6cU1Eb2FIQT09--1506621887c74f161b874615297c557bd0d47510; visit-gitee--2021-08-11%2013%3A50%3A57%20%2B0800=1");
         int code = urlCon.getResponseCode();
         if (code != HttpURLConnection.HTTP_OK) {
             throw new Exception("文件读取失败");
         }
         DataInputStream in = new DataInputStream(urlCon.getInputStream());
         DataOutputStream out = new DataOutputStream(new FileOutputStream(str1));
+        System.out.println("urlCon = " + urlCon);
+        System.out.println("url = " + url);
         byte[] buffer = new byte[20*1024*1024];
-        System.out.println("buffer = " + buffer);
         int count = 0;
         while ((count = in.read(buffer)) > 0) {
             out.write(buffer, 0, count);
@@ -305,8 +312,8 @@ public class ocUpdate {
             System.out.println("OC升级已完成，在result文件夹里，请自行测试");
             System.out.println("您是否要添加仿冒白苹果主题");
             System.out.println("请输入 是 或 否");
-            System.out.println("如果输入 否 则不添加主题");
-            System.out.println("如果输入这两个意外的内容则使用第三方主题");
+            System.out.println("如果输入 否 则复制当前主题");
+            System.out.println("如果输入这两个以外的内容则使用第三方主题");
             Scanner s=new Scanner(System.in);
             String str=s.next();
             switch (str){
@@ -317,7 +324,9 @@ public class ocUpdate {
                     downLoadTheme(fileUrl,path,fileName);
                     break;
                 case "否":
-                    System.out.println("OC升级已完成");
+                    String str1=a+"old/EFI/OC/Resources";
+                    String str2=a+"result/EFI/OC/Resources";
+                    updateTheme(str1,str2);
                     break;
                 default:
                     thirdPartyThemes();
@@ -348,19 +357,25 @@ public class ocUpdate {
                         File fromFile=new File(String.valueOf(tempList3[j]));
                         File toFile= new File(a+"result/EFI/OC/Resources/Font"+File.separator+fileName.getName());
                         copyFolder(String.valueOf(fromFile), String.valueOf(toFile));
-                    }else if(String.valueOf(tempList3[j]).contains(str)){
-                        File fromFile=new File(a+"new/OcBinaryData-master/Resources/Image/Acidanthera");
+                    }else if(String.valueOf(tempList3[j]).contains(str.substring(0,1).toUpperCase(Locale.ROOT))||String.valueOf(tempList3[j]).contains(str)) {
+                        File fromFile = new File(a + "new/OcBinaryData-master/Resources/Image/Acidanthera");
                         System.out.println("!fromFile.isDirectory() = " + !fromFile.isDirectory());
-                        if (!fileName.isDirectory()){
-                            fromFile=new File(a+"new/Resources/image/chris1111");
-                            File toFile= new File(a+"result/EFI/OC/Resources/Image");
+                        if (!fileName.isDirectory()) {
+                            fromFile = new File(a + "new/Resources/image");
+                            File toFile = new File(a + "result/EFI/OC/Resources/Image");
                             copyFolder(String.valueOf(fromFile), String.valueOf(toFile));
-                        }else {
+                            System.out.println("fromFile = " + fromFile.isDirectory());
+                            if (!fromFile.isDirectory()){
+                                fromFile = new File(a + "old/EFI/OC/Resources/Image");
+                                copyFolder(String.valueOf(fromFile), String.valueOf(toFile));
+                            }
+                        } else {
                             System.out.println("fromFile = " + fromFile);
-                            File toFile= new File(a+"result/EFI/OC/Resources/Image");
+                            File toFile = new File(a + "result/EFI/OC/Resources/Image");
                             copyFolder(String.valueOf(fromFile), String.valueOf(toFile));
                         }
-                    }else if(fileName.getName().endsWith(".l2x")||fileName.getName().endsWith(".lbl")){
+                    }
+                    else if(fileName.getName().endsWith(".l2x")||fileName.getName().endsWith(".lbl")){
                         File fromFile=new File(String.valueOf(tempList3[j]));
                         File toFile= new File(a+"result/EFI/OC/Resources/Label"+File.separator+fileName.getName());
                         copyFolder(String.valueOf(fromFile), String.valueOf(toFile));
